@@ -35,14 +35,27 @@ namespace MahApps.Metro.Controls
         /// <summary>
         /// An event that is raised when the closing animation has finished.
         /// </summary>
-        public static readonly RoutedEvent ClosingFinishedEvent =
-            EventManager.RegisterRoutedEvent("ClosingFinished", RoutingStrategy.Bubble,
+        public static readonly RoutedEvent ClosedEvent =
+            EventManager.RegisterRoutedEvent("Closed", RoutingStrategy.Bubble,
                 typeof(RoutedEventHandler), typeof(Flyout));
 
-        public event RoutedEventHandler ClosingFinished
+        public event RoutedEventHandler Closed
         {
-            add { AddHandler(ClosingFinishedEvent, value); }
-            remove { RemoveHandler(ClosingFinishedEvent, value); }
+            add { AddHandler(ClosedEvent, value); }
+            remove { RemoveHandler(ClosedEvent, value); }
+        }
+
+        /// <summary>
+        /// An event that is raised when the closing animation has finished.
+        /// </summary>
+        public static readonly RoutedEvent ClosingEvent =
+            EventManager.RegisterRoutedEvent("Closing", RoutingStrategy.Bubble,
+                typeof(RoutedEventHandler), typeof(Flyout));
+
+        public event RoutedEventHandler Closing
+        {
+            add { AddHandler(ClosingEvent, value); }
+            remove { RemoveHandler(ClosingEvent, value); }
         }
 
         public static readonly DependencyProperty HeaderProperty = DependencyProperty.Register("Header", typeof(string), typeof(Flyout), new PropertyMetadata(default(string)));
@@ -114,7 +127,20 @@ namespace MahApps.Metro.Controls
         public bool IsOpen
         {
             get { return (bool)GetValue(IsOpenProperty); }
-            set { SetValue(IsOpenProperty, value); }
+            set
+            {
+                var oldValue = (bool)GetValue(IsOpenProperty);
+                if (value != oldValue && !value)
+                {
+                    var evArgs = new RoutedEventArgs(ClosingEvent);
+                    this.RaiseEvent(evArgs);
+
+                    // if it was already handled, do not close the flyout
+                    if (evArgs.Handled)
+                        return;
+                }
+                SetValue(IsOpenProperty, value);
+            }
         }
 
         /// <summary>
@@ -206,7 +232,7 @@ namespace MahApps.Metro.Controls
             get { return (bool)this.GetValue(AllowFocusElementProperty); }
             set { this.SetValue(AllowFocusElementProperty, value); }
         }
-        
+
         public Flyout()
         {
             this.Loaded += (sender, args) => UpdateFlyoutTheme();
@@ -322,7 +348,8 @@ namespace MahApps.Metro.Controls
         {
             var flyout = (Flyout)dependencyObject;
 
-            Action openedChangedAction = () => {
+            Action openedChangedAction = () =>
+            {
                 if (e.NewValue != e.OldValue)
                 {
                     if (flyout.AreAnimationsEnabled)
@@ -389,7 +416,7 @@ namespace MahApps.Metro.Controls
             // hide the flyout, we should get better performance and prevent showing the flyout on any resizing events
             this.Visibility = Visibility.Hidden;
 
-            this.RaiseEvent(new RoutedEventArgs(ClosingFinishedEvent));
+            this.RaiseEvent(new RoutedEventArgs(ClosedEvent));
         }
 
         private void TryFocusElement()
@@ -398,7 +425,7 @@ namespace MahApps.Metro.Controls
             {
                 // first focus itself
                 this.Focus();
-                
+
                 if (this.FocusedElement != null)
                 {
                     this.FocusedElement.Focus();
@@ -471,7 +498,7 @@ namespace MahApps.Metro.Controls
 
             PART_Header = (ContentPresenter)GetTemplateChild("PART_Header");
             PART_Content = (ContentPresenter)GetTemplateChild("PART_Content");
-            
+
             hideStoryboard = (Storyboard)GetTemplateChild("HideStoryboard");
             hideFrame = (SplineDoubleKeyFrame)GetTemplateChild("hideFrame");
             hideFrameY = (SplineDoubleKeyFrame)GetTemplateChild("hideFrameY");
