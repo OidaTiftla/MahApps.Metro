@@ -168,10 +168,10 @@ namespace MetroDemo.ExampleWindows
             // when the flyout is closed, remove it from the hosting FlyoutsControl
             RoutedEventHandler closingFinishedHandler = null;
             closingFinishedHandler = (o, args) => {
-                flyout.ClosingFinished -= closingFinishedHandler;
+                flyout.Closed -= closingFinishedHandler;
                 flyoutsControl.Items.Remove(flyout);
             };
-            flyout.ClosingFinished += closingFinishedHandler;
+            flyout.Closed += closingFinishedHandler;
 
             flyoutsControl.Items.Add(flyout);
 
